@@ -4,7 +4,7 @@ deal with tracking results
 
 1. reorgnizing tracking results by assigning unique uid according to classes
 2. generating userInfo and trajs for later use
-3. visualizing tracking results (can be replaced by Jiang's work)
+3. visualizing tracking results (by matplotlib slider)
                                  
 todo: replace byc+ped as cyc?
 
@@ -13,6 +13,8 @@ todo: replace byc+ped as cyc?
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import geopandas as gpd
+from matplotlib.widgets import Button, Slider
 
 def data_reorganizer(path='../data/mapython/transformed_data_np.npy'):
     '''
@@ -171,4 +173,15 @@ def visTracking(data):
 if __name__ == "__main__":
     
     data = data_reorganizer()
-    visTracking(data)
+    # visTracking(data)
+    
+    cols = ['fid','x','y','class','uid']
+    df = pd.DataFrame(data, columns=cols)
+    
+    # replace number ids with class string (for geopandas or other visulizations)
+    mapping = {1:'person', 2: 'bicycle', 3:'car'}
+    df['class'] = df['class'].map(mapping)
+    
+    # save and load pandas
+    df.to_pickle('../data/mapython/sportscheck_fxycu.pkl')    
+    # test = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
