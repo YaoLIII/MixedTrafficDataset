@@ -8,52 +8,57 @@ test vis trajectory with matplotlib
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, Slider
+import numpy as np
 
+# def update(f):
+#     frame_data = data[data['fid'] == f]
+#     sc.set_offsets(frame_data[['x', 'y']])
+
+def update(frame):
+    for i, cls in enumerate(classes):
+        class_data = data[(data['class'] == cls) & (data['fid'] == frame)]
+        sc[i].set_offsets(class_data[['x', 'y']])
+        sc[i].set_label(cls)
+    
+# Function to update plot when slider value changes
+def update_slider(val):
+    frame = s_fid.val
+    update(frame)
+    fig.canvas.draw_idle()
+    
 # load data
 data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
 
-# TODO: The parametrized function to be plotted
-def extract_user(f, data):
-    fdata = data[data['fid']==f]
-    return fdata
+# Get unique classes and assign colors
+classes = data['class'].unique()
+colors = plt.cm.rainbow(np.linspace(0, 1, len(classes)))
 
-frame = data['fid']
-
-# TODO: Create the figure and the line that we will manipulate
+# Create figure and axes
 fig, ax = plt.subplots()
-fdata = extract_user(frame, data)
-line, = ax.plot(fdata['x'],fdata['y'])
-ax.set_xlabel('Frame id')
-
 # adjust the main plot to make room for the sliders
-fig.subplots_adjust(left=0.25, bottom=0.25)
+fig.subplots_adjust(bottom=0.25)
+ax.set_xlabel('x coordinates')
+ax.set_ylabel('y coordinates')
 
-# Make a horizontal slider to control the frequency.
-axframe = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-frame_slider = Slider(
-    ax=axframe,
-    label='Frame',
-    valmin=3,
-    valmax=max(frame),
-    valinit=3,
-)
+# # Plot initial frames
+# sc = ax.scatter(data['x'], data['y'])
 
-# The function to be called anytime a slider's value changes
-def update(val):
-    line.set_ydata(extract_user(frame, data))
-    fig.canvas.draw_idle()
+# Plot initial frame
+sc = []
+for i, cls in enumerate(classes):
+    class_data = data[data['class'] == cls]
+    s = ax.scatter(class_data['x'], class_data['y'], color=colors[i], label=cls)
+    sc.append(s)
+    
+# Add legend
+ax.legend()
 
+# Create a Slider
+ax_fid = plt.axes([0.25, 0.1, 0.65, 0.03], facecolor='lightgoldenrodyellow')
+s_fid = Slider(ax_fid, 'Frame id', data['fid'].min(), data['fid'].max(), valinit=data['fid'].min(), valstep=1)
 
-# register the update function with each slider
-frame_slider.on_changed(update)
+# Connect slider to update function
+s_fid.on_changed(update_slider)
 
-# Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
-resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-button = Button(resetax, 'Reset', hovercolor='0.975')
-
-
-def reset(event):
-    frame_slider.reset()
-button.on_clicked(reset)
-
+# Show plot
 plt.show()
