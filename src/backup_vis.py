@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-vis trajectory with matplotlib 
-
-given df with [frameid, x, y, class, userid]
-visulized with slider (s_var = frameid)
+test vis trajectory with matplotlib 
 
 @author: li
 """
@@ -18,10 +15,10 @@ import numpy as np
 #     sc.set_offsets(frame_data[['x', 'y']])
 
 def update(frame):
-    for i, user in enumerate(users):
-        user_data = data[(data['uid'] == user) & (data['fid'] == frame)]
-        sc[i].set_offsets(user_data[['x', 'y']])
-        sc[i].set_label(user)
+    for i, cls in enumerate(classes):
+        class_data = data[(data['class'] == cls) & (data['fid'] == frame)]
+        sc[i].set_offsets(class_data[['x', 'y']])
+        sc[i].set_label(cls)
     
 # Function to update plot when slider value changes
 def update_slider(val):
@@ -30,30 +27,27 @@ def update_slider(val):
     fig.canvas.draw_idle()
     
 # load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').head(10000)
+data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
 
-# load background
-background_img = plt.imread('../fig/resized_sportscheck.png')
-
-# Get unique ids and assign colors
-users = data['uid'].unique()
-colors = plt.cm.rainbow(np.linspace(0, 1, len(users)))
+# Get unique classes and assign colors
+classes = data['class'].unique()
+colors = plt.cm.rainbow(np.linspace(0, 1, len(classes)))
 
 # Create figure and axes
 fig, ax = plt.subplots()
-ax.imshow(background_img, alpha=0.7)
-
 # adjust the main plot to make room for the sliders
 fig.subplots_adjust(bottom=0.25)
 ax.set_xlabel('x coordinates')
 ax.set_ylabel('y coordinates')
 
+# # Plot initial frames
+# sc = ax.scatter(data['x'], data['y'])
+
 # Plot initial frame
 sc = []
-for i, user in enumerate(users):
-    user_data = data[data['uid'] == user]
-    s = ax.scatter(user_data['x'], user_data['y'], color=colors[i], label=user)
-    # s = ax.scatter(user_data['x'], user_data['y'], color=colors[i])
+for i, cls in enumerate(classes):
+    class_data = data[data['class'] == cls]
+    s = ax.scatter(class_data['x'], class_data['y'], color=colors[i], label=cls)
     sc.append(s)
     
 # Add legend
