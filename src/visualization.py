@@ -91,6 +91,8 @@ annotations = [ax.text(x[i], y[i], str(int(uids[i])), fontsize=9, ha='right', va
 def update(fid):
     global x, y, labels, uids, alpha, colors
     
+    print(fid)
+    
     # Generate new points
     new_data = data[data['fid']==fid]
     num_newpoints = len(new_data)
@@ -107,12 +109,11 @@ def update(fid):
     colors = [label_to_color[label] for label in labels]
     
     # Append new alpha values and decrease the alpha of existing points
-    alpha = np.concatenate([alpha * 0.8, np.ones(num_newpoints)])
+    alpha = np.concatenate([alpha * 0.1, np.ones(num_newpoints)])
    
-    # Update the scatter plot data
-    scatter.set_offsets(np.c_[x, y])
-    scatter.set_color(colors)
-    scatter.set_alpha(alpha)
+    # Redraw the scatter plot data
+    sc = ax.scatter(x, y, c=colors)
+    sc.set_alpha(alpha)
     
     # Update annotations
     for i, annotation in enumerate(annotations):
@@ -120,13 +121,23 @@ def update(fid):
         annotation.set_alpha(alpha[i])
     
     # Add new annotations
-    new_annotations = [ax.text(new_x[i], new_y[i], str(new_uids[i]), fontsize=9, ha='right', va='top', alpha=1.0) for i in range(10)]
+    new_annotations = [ax.text(new_x[i], new_y[i], str(int(new_uids[i])), fontsize=9, ha='right', va='top', alpha=1.0) for i in range(num_newpoints)]
     annotations.extend(new_annotations)
     
     return scatter, *annotations
 
 # Create animation
-ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=1000, blit=True)
+ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=500, blit=False)
 
 # Show the plot
 plt.show()
+
+
+# # test scatter
+# fig, ax = plt.subplots()
+# alpha =  np.random.rand(10)
+# sc = ax.scatter(x,y, c = colors)
+# ax.clear()
+# sc.set_alpha(alpha)
+# ax.add_collection(sc)
+# plt.show()
