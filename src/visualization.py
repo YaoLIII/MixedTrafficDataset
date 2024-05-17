@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 """
 vis trajectory with matplotlib 
 
@@ -89,9 +89,11 @@ scatter = ax.scatter(x, y, c=colors, alpha=alpha)
 annotations = [ax.text(x[i], y[i], str(int(uids[i])), fontsize=9, ha='right', va='top', alpha=alpha[i]) for i in range(num_points)]
 
 def update(fid):
-    global x, y, labels, uids, alpha, colors
+    global x, y, labels, uids, alpha, colors, scatter
     
-    print(fid)
+    print(fid) # check
+    ax.set_title(u"movement at frame {}".format(str(int(fid))))
+    scatter.remove()
     
     # Generate new points
     new_data = data[data['fid']==fid]
@@ -109,16 +111,19 @@ def update(fid):
     colors = [label_to_color[label] for label in labels]
     
     # Append new alpha values and decrease the alpha of existing points
-    alpha = np.concatenate([alpha * 0.1, np.ones(num_newpoints)])
+    alpha = np.concatenate([alpha * 0.8, np.ones(num_newpoints)])
    
     # Redraw the scatter plot data
-    sc = ax.scatter(x, y, c=colors)
-    sc.set_alpha(alpha)
+    scatter = ax.scatter(x, y, c=colors)
+    scatter.set_alpha(alpha)
+    
+    alpha_annotations = np.zeros(len(alpha))
+    alpha_annotations[-1] = 1
     
     # Update annotations
     for i, annotation in enumerate(annotations):
         annotation.set_position((x[i], y[i]))
-        annotation.set_alpha(alpha[i])
+        annotation.set_alpha(alpha_annotations[i])
     
     # Add new annotations
     new_annotations = [ax.text(new_x[i], new_y[i], str(int(new_uids[i])), fontsize=9, ha='right', va='top', alpha=1.0) for i in range(num_newpoints)]
@@ -129,15 +134,12 @@ def update(fid):
 # Create animation
 ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=500, blit=False)
 
+# To save the animation using Pillow as a gif
+writer = animation.PillowWriter(fps=15,
+                                metadata=dict(artist='Me'),
+                                bitrate=1800)
+ani.save('scatter.gif', writer=writer)
+
 # Show the plot
 plt.show()
 
-
-# # test scatter
-# fig, ax = plt.subplots()
-# alpha =  np.random.rand(10)
-# sc = ax.scatter(x,y, c = colors)
-# ax.clear()
-# sc.set_alpha(alpha)
-# ax.add_collection(sc)
-# plt.show()
