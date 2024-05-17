@@ -72,7 +72,7 @@ ax.imshow(background_img, alpha=0.7)
 init_fid = 3
 init_data = data[data['fid']==init_fid]
 num_points = len(init_data)
-left_fid = data['fid'].to_numpy()[1:]
+left_fid = np.unique(data['fid'].to_numpy()[1:])
 
 x = init_data['x'].to_numpy()
 y = init_data['y'].to_numpy()
@@ -132,13 +132,13 @@ def update(fid):
     return scatter, *annotations
 
 # Create animation
-ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=500, blit=False)
+ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=10, blit=False)
 
 # To save the animation using Pillow as a gif
 writer = animation.PillowWriter(fps=15,
                                 metadata=dict(artist='Me'),
                                 bitrate=1800)
-ani.save('scatter.gif', writer=writer)
+ani.save('scatter.mp4', writer=writer)
 
 # Show the plot
 plt.show()
