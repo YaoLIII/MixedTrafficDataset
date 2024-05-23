@@ -136,9 +136,9 @@ ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=10, blit=Fa
 
 # To save the animation using Pillow as a gif
 writer = animation.PillowWriter(fps=15,
-                                metadata=dict(artist='Me'),
+                                metadata=dict(artist='Yao'),
                                 bitrate=1800)
-ani.save('scatter.mp4', writer=writer)
+ani.save('scatter.gif', writer=writer)
 
 # Show the plot
 plt.show()
