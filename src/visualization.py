@@ -15,15 +15,15 @@ from matplotlib.widgets import Button, Slider
 import numpy as np
 
 # load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
+data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('uid').head(10000)
 # load background
-background_img = plt.imread('../fig/resized_sportscheck.png')
+# background_img = plt.imread('../fig/resized_sportscheck.png')
 # Get unique uids and assign colors
 uids = data['uid'].unique()
 colors = plt.cm.rainbow(np.linspace(0, 1, len(uids)))
 # Create figure and axes
 fig, ax = plt.subplots()
-ax.imshow(background_img, alpha=0.7)
+# ax.imshow(background_img, alpha=0.7)
 
 
 ''' solution 1 - slider'''
@@ -132,13 +132,15 @@ def update(fid):
     return scatter, *annotations
 
 # Create animation
-ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=10, blit=False)
+ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=20, blit=False)
 
-# To save the animation using Pillow as a gif
-writer = animation.PillowWriter(fps=15,
-                                metadata=dict(artist='Yao'),
-                                bitrate=1800)
-ani.save('scatter.gif', writer=writer)
+# # To save the animation using Pillow as a gif
+# writer = animation.PillowWriter(fps=15,
+#                                 metadata=dict(artist='Yao'),
+#                                 bitrate=1800)
+# ani.save('scatter.gif', writer=writer)
+
+ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
 # Show the plot
 plt.show()
