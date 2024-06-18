@@ -11,15 +11,18 @@ solution 2: using animation
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.widgets import Button, Slider
 import numpy as np
 
-import time
-
-time.sleep(10) # for recording
+# import time
+# time.sleep(10) # for recording
 
 # load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').head(10000)
+data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[5000:10000]
+
+# # vis single agent for data washing
+# tempu = data.loc[data['uid'] == 20]
+# tempu.plot(x='x', y='y')
+
 # load background
 background_img = plt.imread('../fig/resized_sportscheck.png')
 # Get unique uids and assign colors
@@ -30,7 +33,7 @@ fig, ax = plt.subplots()
 ax.imshow(background_img, alpha=0.7)
 
 # extract initial data (fid == 3)
-init_fid = 3
+init_fid = min(data['fid'])
 init_data = data[data['fid']==init_fid]
 num_points = len(init_data)
 left_fid = np.unique(data['fid'].to_numpy()[1:])
