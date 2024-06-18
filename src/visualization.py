@@ -14,59 +14,20 @@ import matplotlib.animation as animation
 from matplotlib.widgets import Button, Slider
 import numpy as np
 
+import time
+
+time.sleep(10) # for recording
+
 # load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('uid').head(10000)
+data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').head(10000)
 # load background
-# background_img = plt.imread('../fig/resized_sportscheck.png')
+background_img = plt.imread('../fig/resized_sportscheck.png')
 # Get unique uids and assign colors
 uids = data['uid'].unique()
 colors = plt.cm.rainbow(np.linspace(0, 1, len(uids)))
 # Create figure and axes
 fig, ax = plt.subplots()
-# ax.imshow(background_img, alpha=0.7)
-
-
-''' solution 1 - slider'''
-
-# def update(frame):
-#     for i, user in enumerate(uids):
-#         user_data = data[(data['uid'] == user) & (data['fid'] == frame)]
-#         sc[i].set_offsets(user_data[['x', 'y']])
-#         sc[i].set_label(user)
-    
-# # Function to update plot when slider value changes
-# def update_slider(val):
-#     frame = s_fid.val
-#     update(frame)
-#     fig.canvas.draw_idle()
-
-# # adjust the main plot to make room for the sliders
-# fig.subplots_adjust(bottom=0.25)
-# ax.set_xlabel('x coordinates')
-# ax.set_ylabel('y coordinates')
-
-# # Plot initial frame
-# sc = []
-# for i, user in enumerate(uids):
-#     user_data = data[data['uid'] == user]
-#     s = ax.scatter(user_data['x'], user_data['y'], color=colors[i], label=user)
-#     # s = ax.scatter(user_data['x'], user_data['y'], color=colors[i])
-#     sc.append(s)
-    
-# # Add legend
-# ax.legend()
-
-# # Create a Slider
-# ax_fid = plt.axes([0.25, 0.1, 0.65, 0.03], facecolor='lightgoldenrodyellow')
-# s_fid = Slider(ax_fid, 'Frame id', data['fid'].min(), data['fid'].max(), valinit=data['fid'].min(), valstep=1)
-
-# # Connect slider to update function
-# s_fid.on_changed(update_slider)
-
-# # Show plot
-# plt.show()
-
-''' solution 2 - anim '''
+ax.imshow(background_img, alpha=0.7)
 
 # extract initial data (fid == 3)
 init_fid = 3
@@ -132,7 +93,7 @@ def update(fid):
     return scatter, *annotations
 
 # Create animation
-ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=20, blit=False)
+ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
 
 # # To save the animation using Pillow as a gif
 # writer = animation.PillowWriter(fps=15,
@@ -140,7 +101,7 @@ ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=20, blit=Fa
 #                                 bitrate=1800)
 # ani.save('scatter.gif', writer=writer)
 
-ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+# ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
 # Show the plot
 plt.show()

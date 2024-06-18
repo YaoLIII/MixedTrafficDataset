@@ -13,8 +13,6 @@ todo: replace byc+ped as cyc?
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import geopandas as gpd
-from matplotlib.widgets import Button, Slider
 
 def data_reorganizer(path='../data/mapython/transformed_data_np.npy'):
     '''
