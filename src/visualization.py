@@ -12,12 +12,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import time
 
-# import time
 # time.sleep(10) # for recording
 
 # load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[5000:10000]
+data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[0:10000]
 
 # # vis single agent for data washing
 # tempu = data.loc[data['uid'] == 20]
@@ -104,7 +104,11 @@ ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=F
 #                                 bitrate=1800)
 # ani.save('scatter.gif', writer=writer)
 
-# ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+start_time = time.time()
+ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+end_time = time.time()
+
+print("--- %s mins ---" % (time.time() - start_time))
 
 # Show the plot
 plt.show()
