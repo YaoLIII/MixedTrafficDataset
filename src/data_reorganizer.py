@@ -183,3 +183,6 @@ if __name__ == "__main__":
     # save and load pandas
     df.to_pickle('../data/mapython/sportscheck_fxycu.pkl')    
     # test = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
+    
+    # save as csv for manully checking - might still need to change in excel due to German typing style...
+    df.to_csv('../data/mapython/sportscheck_fxycu.csv', sep=',', encoding='utf-8', index=False, decimal=',')

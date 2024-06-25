@@ -16,8 +16,10 @@ import time
 
 # time.sleep(10) # for recording
 
-# load data
-data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[0:10000]
+# # load data
+# data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[0:10000]
+# with modified data
+data = pd.read_csv('../data/mapython/sportscheck_fxycu.csv', sep=';', decimal=',')
 
 # # vis single agent for data washing
 # tempu = data.loc[data['uid'] == 20]
