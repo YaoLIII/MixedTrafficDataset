@@ -19,7 +19,7 @@ import time
 # # load data
 # data = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl').sort_values('fid').iloc[0:10000]
 # with modified data
-data = pd.read_csv('../data/mapython/sportscheck_fxycu.csv', sep=';', decimal=',')
+data = pd.read_csv('../data/mapython/sportscheck_fxycu_0625.csv', sep=';', decimal=',').sort_values('fid')
 
 # # vis single agent for data washing
 # tempu = data.loc[data['uid'] == 20]
@@ -100,17 +100,11 @@ def update(fid):
 # Create animation
 ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
 
-# # To save the animation using Pillow as a gif
-# writer = animation.PillowWriter(fps=15,
-#                                 metadata=dict(artist='Yao'),
-#                                 bitrate=1800)
-# ani.save('scatter.gif', writer=writer)
+# start_time = time.time()
+# ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+# end_time = time.time()
 
-start_time = time.time()
-ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
-end_time = time.time()
-
-print("--- %s mins ---" % (time.time() - start_time))
+# print("--- %s mins ---" % (time.time() - start_time))
 
 # Show the plot
 plt.show()
