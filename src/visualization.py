@@ -100,11 +100,11 @@ def update(fid):
 # Create animation
 ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
 
-# start_time = time.time()
-# ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
-# end_time = time.time()
+start_time = time.time()
+ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+end_time = time.time()
 
-# print("--- %s mins ---" % (time.time() - start_time))
+print("--- %s mins ---" % (time.time() - start_time))
 
 # Show the plot
 plt.show()
