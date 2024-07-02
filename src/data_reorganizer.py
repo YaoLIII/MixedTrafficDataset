@@ -4,9 +4,8 @@ deal with tracking results
 
 1. reorgnizing tracking results by assigning unique uid according to classes
 2. generating userInfo and trajs for later use
-3. visualizing tracking results (by matplotlib slider)
-                                 
-todo: replace byc+ped as cyc?
+3. visualizing tracking results (by matplotlib slider) - dropped
+4. manully work: replace ped+bi with cyc
 
 @author: li
 """
@@ -63,14 +62,24 @@ def data_reorganizer(path='../data/mapython/transformed_data_np.npy'):
     
     return new_data
 
+def replaceDfValues(df, oldc, newc, col='uid'):
+    '''
+    replace a certain column of df with new values
+    '''
+    mapping = dict(zip(oldc,newc))
+    # df[col] = df[col].map(mapping)
+    df.loc[:,col] = df.loc[:,col].map(mapping)
+    
+    return df
+
 def dataConvert(data):
     '''
     from tracking results to userInfo and Trajs
 
     ----------
     i : [frame, cx, cy, class_id, uid]
-    o : 
-       - userInfo [0:uid 1:ox 2:oy 3:t_a 4:dx 5:dy 6:speed 7:gid(0) 8:w_time(0) 9: type]
+    o : [id ox oy t_a dx dy speed type gid_0, wtime_0]
+       - userInfo [0:uid 1:ox 2:oy 3:t_a 4:dx 5:dy 6:speed 7:class 8:gid(0) 9:w_time(0) ]
        - trajs    [0:fid 1:uid 2:x 3:y 4:type]
 
     ''' 
@@ -87,21 +96,15 @@ def dataConvert(data):
         user = trajs[trajs[:,1]==uid]
         vel = avgVel(user)
         # [id,ox,oy,t0,dx,dy,speed,gid,w_time,type]
-        user_info = [uid,user[0,2],user[0,3],user[0,0],user[-1,2],user[-1,3], vel, 0, 0, user[0,4]]
+        user_info = [uid,user[0,2],user[0,3],user[0,0],user[-1,2],user[-1,3], vel, user[0,4], 0, 0]
         userInfo.append(user_info)
     userInfo = np.asarray(userInfo)
     
     return trajs, userInfo
 
-def replaceDfValues(df, oldc, newc, col='uid'):
-    '''
-    replace a certain column of df with new values
-    '''
-    mapping = dict(zip(oldc,newc))
-    # df[col] = df[col].map(mapping)
-    df.loc[:,col] = df.loc[:,col].map(mapping)
+def dataConvert_df(df):
     
-    return df
+    return True
 
 def avgVel(user):
     '''
@@ -116,73 +119,27 @@ def avgVel(user):
     
     return vel
 
-def visTracking(data):
-    '''
-    data: [frame, cx, cy, class_id, uid]
-    '''
-    t_min = min(data[:,0])
-    t_max = max(data[:,0])
-    
-    x_min = min(data[:,1])
-    x_max = max(data[:,1])
-    y_min = min(data[:,2])
-    y_max = max(data[:,2])
-    
-    # extent = x_min, x_max, y_min, y_max
-
-    for t in np.arange(t_min, t_max):
-        
-        co_user_id =  data[data[:,0]==t][:,4]
-        co_user_traj = [data[data[:,4]==id][:,:] for id in co_user_id]
-    
-        co_user_traj_sofar = []
-        for traj in co_user_traj:
-            co_user_traj_sofar.append(traj[traj[:,0]<=t])
-        
-        plt.cla()
-        
-        for traj in co_user_traj_sofar:
-            # plt.plot(traj[-10:,3],traj[-10:,4],'b--')
-            if traj[0,3] == 1: # pedestrian
-                plt.plot(traj[:,1],traj[:,2],'g--')
-                plt.scatter(traj[-1,1], traj[-1,2], s=24, color='g', marker='X')
-            elif traj[0,3] == 2: # byc
-                plt.plot(traj[:,1],traj[:,2],'y--')
-                plt.scatter(traj[-1,1], traj[-1,2], s=24, color='y', marker='o')
-            else:  # car
-                plt.plot(traj[:,1],traj[:,2],'r--')
-                plt.scatter(traj[-1,1], traj[-1,2], s=48, color='r', marker='^')
-            plt.annotate(str(int(traj[0,4])),
-                              (traj[-1,1], traj[-1,1]),
-                              textcoords="offset points",
-                              xytext=(0,5),
-                              ha='right')
-            
-        plt.xlim(x_min-2, x_max+2)
-        plt.ylim(y_min-2, y_max+2)
-        plt.title( "Movements at time " + str(int(t)) )
-        plt.savefig('../fig/tracking_results/'+str(int(t))+'.png')
-        print(t)
-  
-    # plt.pause(0.01)
-    
-    return None
-
 if __name__ == "__main__":
     
-    data = data_reorganizer()
-    # visTracking(data)
-    
+    print("reassigning unique ids to tracking data...")
+    data = data_reorganizer()    
+    # np -> df
     cols = ['fid','x','y','class','uid']
-    df = pd.DataFrame(data, columns=cols)
-    
-    # replace number ids with class string (for geopandas or other visulizations)
-    mapping = {1:'person', 2: 'bicycle', 3:'car'}
-    df['class'] = df['class'].map(mapping)
-    
-    # save and load pandas
-    df.to_pickle('../data/mapython/sportscheck_fxycu.pkl')    
-    # test = pd.read_pickle('../data/mapython/sportscheck_fxycu.pkl')
+    df = pd.DataFrame(data, columns=cols)    
+    mapping_nts = {1:'person', 2: 'bicycle', 3:'car'}
+    df['class'] = df['class'].map(mapping_nts)
     
     # save as csv for manully checking - might still need to change in excel due to German typing style...
+    print("Save as csv for trajectory correction...")
     df.to_csv('../data/mapython/sportscheck_fxycu.csv', sep=',', encoding='utf-8', index=False, decimal=',')
+    input("Press Enter after correction in csv file...")
+    
+    print("Saving filtered trajs as userInfo...")
+    df_filtered = pd.read_csv('../data/mapython/sportscheck_fxycu_0625.csv', sep=';', decimal=',').sort_values('fid')
+    # df->np (class col string -> num)
+    mapping_stn = {'person': 1, 'bicycle': 2, 'car': 3}
+    df_filtered['class'] = df_filtered['class'].map(mapping_stn)
+    data_filtered = df_filtered.to_numpy()    
+    trajs, userInfo = dataConvert(data_filtered)
+    np.save('D:/Seafile/moveagentinformation/data/mapython_userInfo.npy', userInfo)
+    np.save('D:/Seafile/moveagentinformation/data/mapython_trajs.npy', trajs)
