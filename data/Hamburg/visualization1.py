@@ -14,17 +14,13 @@ import matplotlib.animation as animation
 import numpy as np
 import time
 
-# time.sleep(10) # for recording
-
-# with modified data
-data = pd.read_csv('../data/mapython/sportscheck_fxycu_0625.csv', sep=';', decimal=',').sort_values('fid')
-
-# # vis single agent for data washing
-# tempu = data.loc[data['uid'] == 20]
-# tempu.plot(x='x', y='y')
+# read csv as dataframe with Humburg dataset
+data = pd.read_csv('Hamburg_trajs.csv', sep=';', decimal=',').sort_values('fid')
+data = data[['fid', 'x', 'y', 'uid', 'class']].reset_index(drop=True)
+data['size'] = 1
 
 # load background
-background_img = plt.imread('../fig/resized_sportscheck.png')
+background_img = plt.imread('background_Bergedorf_resized.jpg')
 # Get unique uids and assign colors
 uids = data['uid'].unique()
 colors = plt.cm.rainbow(np.linspace(0, 1, len(uids)))
@@ -104,6 +100,7 @@ end_time = time.time()
 
 print("--- %s mins ---" % (time.time() - start_time))
 
-# Show the plot
-plt.show()
+# # Show the plot
+# plt.show()
+
 
