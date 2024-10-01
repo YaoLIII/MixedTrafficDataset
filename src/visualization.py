@@ -13,44 +13,36 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import time
+import os
 
-# time.sleep(10) # for recording
+def draw_trajs(df):
+    
+    # Create a folder to save the plots
+    folder_path = '../data/mapython/check_trajs/'
+    os.makedirs(folder_path, exist_ok=True)
+    
+    x_min, x_max = df['x'].min(), df['x'].max()
+    y_min, y_max = df['y'].min(), df['y'].max()
+    
+    # Group by 'uid' and plot each trajectory
+    for uid, group in df.groupby('uid'):
+        plt.figure()  # Create a new figure for each trajectory
+        plt.xlim(x_min, x_max)
+        plt.ylim(y_min, y_max)
+        plt.plot(group['x'], group['y'], marker='o', linestyle='-', label=f'User {uid}')
+        plt.xlabel('X coordinate')
+        plt.ylabel('Y coordinate')
+        plt.title(f'Trajectory of User {uid}')
+        plt.legend()
+    
+        # Save the figure to the folder with uid in the filename
+        plt.savefig(os.path.join(folder_path, f'user_{uid}_trajectory.png'))
+    
+        # Close the plot to free memory
+        plt.close()
+    
+    print(f"All trajectories have been saved in the '{folder_path}' folder.")
 
-# with modified data
-data = pd.read_csv('../data/mapython/sportscheck_fxycu_0625.csv', sep=';', decimal=',').sort_values('fid')
-
-# # vis single agent for data washing
-# tempu = data.loc[data['uid'] == 20]
-# tempu.plot(x='x', y='y')
-
-# load background
-background_img = plt.imread('../fig/resized_sportscheck.png')
-# Get unique uids and assign colors
-uids = data['uid'].unique()
-colors = plt.cm.rainbow(np.linspace(0, 1, len(uids)))
-# Create figure and axes
-fig, ax = plt.subplots()
-ax.imshow(background_img, alpha=0.7)
-
-# extract initial data (fid == 3)
-init_fid = min(data['fid'])
-init_data = data[data['fid']==init_fid]
-num_points = len(init_data)
-left_fid = np.unique(data['fid'].to_numpy()[1:])
-
-x = init_data['x'].to_numpy()
-y = init_data['y'].to_numpy()
-uids = init_data['uid'].to_numpy()
-labels = init_data['class']
-alpha = np.ones(num_points)
-
-# Map labels to colors
-label_to_color = {"car": "red", "person": "green", "bicycle": "yellow"}
-colors = [label_to_color[label] for label in labels]
-
-# plot init figure
-scatter = ax.scatter(x, y, c=colors, alpha=alpha)
-annotations = [ax.text(x[i], y[i], str(int(uids[i])), fontsize=9, ha='right', va='top', alpha=alpha[i]) for i in range(num_points)]
 
 def update(fid):
     global x, y, labels, uids, alpha, colors, scatter
@@ -95,15 +87,51 @@ def update(fid):
     
     return scatter, *annotations
 
-# Create animation
-ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
-
-start_time = time.time()
-ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
-end_time = time.time()
-
-print("--- %s mins ---" % (time.time() - start_time))
-
-# Show the plot
-plt.show()
-
+if __name__ == "__main__":
+    # with modified data
+    data = pd.read_csv('../data/mapython/sportscheck_fxycu_0625.csv', sep=';', decimal=',').sort_values('fid')
+    
+    # plot all trajs at once for checking
+    draw_trajs(data)
+    
+    # load background
+    background_img = plt.imread('../fig/resized_sportscheck.png')
+    # Get unique uids and assign colors
+    uids = data['uid'].unique()
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(uids)))
+    # Create figure and axes
+    fig, ax = plt.subplots()
+    ax.imshow(background_img, alpha=0.7)
+    
+    # extract initial data (fid == 3)
+    init_fid = min(data['fid'])
+    init_data = data[data['fid']==init_fid]
+    num_points = len(init_data)
+    left_fid = np.unique(data['fid'].to_numpy()[1:])
+    
+    x = init_data['x'].to_numpy()
+    y = init_data['y'].to_numpy()
+    uids = init_data['uid'].to_numpy()
+    labels = init_data['class']
+    alpha = np.ones(num_points)
+    
+    # Map labels to colors
+    label_to_color = {"car": "red", "person": "green", "bicycle": "yellow"}
+    colors = [label_to_color[label] for label in labels]
+    
+    # plot init figure
+    scatter = ax.scatter(x, y, c=colors, alpha=alpha)
+    annotations = [ax.text(x[i], y[i], str(int(uids[i])), fontsize=9, ha='right', va='top', alpha=alpha[i]) for i in range(num_points)]
+    
+    # Create animation
+    ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
+    
+    start_time = time.time()
+    ani.save('test_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+    end_time = time.time()
+    
+    print("--- %s mins ---" % (time.time() - start_time))
+    
+    # Show the plot
+    plt.show()
+    
