@@ -28,7 +28,7 @@ def draw_trajs(df):
     for uid, group in df.groupby('uid'):
         plt.figure()  # Create a new figure for each trajectory
         plt.xlim(x_min, x_max)
-        plt.ylim(y_min, y_max)
+        plt.ylim(y_max, y_min)
         plt.plot(group['x'], group['y'], marker='o', linestyle='-', label=f'User {uid}')
         plt.xlabel('X coordinate')
         plt.ylabel('Y coordinate')
