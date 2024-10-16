@@ -26,10 +26,15 @@ def draw_trajs(df):
     
     # Group by 'uid' and plot each trajectory
     for uid, group in df.groupby('uid'):
+        # # test median filter for y value only
+        # from scipy.signal import medfilt
+        # med_y = medfilt(group['y'],27)
+        
         plt.figure()  # Create a new figure for each trajectory
         plt.xlim(x_min, x_max)
         plt.ylim(y_max, y_min)
         plt.plot(group['x'], group['y'], marker='o', linestyle='-', label=f'User {uid}')
+        # plt.plot(group['x'], med_y, marker='o', linestyle='-', label=f'User {uid}')
         plt.xlabel('X coordinate')
         plt.ylabel('Y coordinate')
         plt.title(f'Trajectory of User {uid}')
