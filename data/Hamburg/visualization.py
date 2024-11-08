@@ -15,7 +15,7 @@ import numpy as np
 import time
 
 # read csv as dataframe with Humburg dataset
-data = pd.read_csv('Hamburg_trajs.csv', sep=';', decimal=',').sort_values('fid')
+data = pd.read_csv('Hamburg_trajs_subset.csv', sep=',', decimal='.').sort_values('fid')
 data = data[['fid', 'x', 'y', 'uid', 'class']].reset_index(drop=True)
 data['size'] = 1
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-extract part of data for later use, by given fid range [,] and the users exists fully inside the range
+extract part of data for later use, by given fid range [,] to get the users exists fully inside the range
 
 input:
     given data with [frameid, x, y, userid, class, size]
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 
-def selected_data(df, f_start = 1, f_duration = 100):
+def selected_data(df, f_start = 100, f_duration = 200):
     print("start extracting data ...")
     
     f_end = f_start + f_duration
@@ -70,3 +70,9 @@ if __name__ == '__main__':
     f_duration = int(input("Enter desired traffic duration (0-" + str(max_fid_start - f_start) + "):"))
     
     trajs, user_summary = selected_data(df, f_start, f_duration)
+    
+    # save the extracted data
+    trajs.to_csv('Hamburg_trajs_subset.csv', index=False)
+    user_summary.to_csv('Hamburg_user_summary_subset.csv', index=False)
+    
+    
