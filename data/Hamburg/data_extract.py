@@ -7,7 +7,7 @@ input:
     'class' : pedestrian, car, bicycle
 
 params: frange[f_start, f_duration]
-output: sub-data table with [uid,x,y,fid,class] and user_summary table [uid,ox,oy,ta,dx,dy,spd,class,gid,wtime]
+output: sub-data table with [uid,x,y,fid,class] and user_summary table [uid,ox,oy,ta,dx,dy,spd,class,gid(nan),wtime(0)]
 
 @author: li
 """
@@ -41,6 +41,10 @@ def selected_data(df, f_start = 100, f_duration = 200):
     })).reset_index()
     
     print('selection done!')
+    
+    # add gid and wtime into user_summery
+    selected_user_summary['gid'] = np.nan
+    selected_user_summary['wtime'] = 0
     
     return selected_df, selected_user_summary
 
