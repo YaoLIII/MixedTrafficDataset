@@ -95,12 +95,10 @@ def update(fid):
 ani = animation.FuncAnimation(fig, update, frames=left_fid, interval=0.1, blit=False)
 
 start_time = time.time()
-ani.save('hamburg_subset_anim.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+ani.save('hamburg_subset_anim.mp4', fps=10, extra_args=['-vcodec', 'libx264'])
 end_time = time.time()
 
 print("--- %s mins ---" % (time.time() - start_time))
 
-# # Show the plot
-# plt.show()
 
 

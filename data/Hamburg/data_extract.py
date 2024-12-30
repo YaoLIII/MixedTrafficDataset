@@ -22,6 +22,7 @@ def selected_data(df, f_start = 100, f_duration = 200):
     
     f_end = f_start + f_duration
     
+    # existanse table [uid, fmin, fax]
     user_exist = df.groupby('uid')['fid'].agg(['min','max']).reset_index()
     user_exist.columns = ['uid','min_fid','max_fid']
     
@@ -36,7 +37,7 @@ def selected_data(df, f_start = 100, f_duration = 200):
         'ta': group['fid'].iloc[0],
         'dx': group['x'].iloc[-1],
         'dy': group['y'].iloc[-1],
-        'spd': calculate_average_speed(group),
+        'spd': group['spd'].mean(),
         'class': group['class'].iloc[0]
     })).reset_index()
     
@@ -48,24 +49,24 @@ def selected_data(df, f_start = 100, f_duration = 200):
     
     return selected_df, selected_user_summary
 
-def calculate_average_speed(group):
-    # Calculate total distance
-    distances = np.sqrt(np.diff(group['x'])**2 + np.diff(group['y'])**2)
-    total_distance = distances.sum()
+# def calculate_average_speed(group):
+#     # Calculate total distance
+#     distances = np.sqrt(np.diff(group['x'])**2 + np.diff(group['y'])**2)
+#     total_distance = distances.sum()
     
-    # Calculate time duration
-    time_duration = group['fid'].iloc[-1] - group['fid'].iloc[0]
+#     # Calculate time duration
+#     time_duration = group['fid'].iloc[-1] - group['fid'].iloc[0]
     
-    # Handle division by zero if time_duration is zero
-    average_speed = total_distance / time_duration if time_duration > 0 else 0
-    return average_speed
+#     # Handle division by zero if time_duration is zero
+#     average_speed = total_distance / time_duration if time_duration > 0 else 0
+#     return average_speed
 
 
 if __name__ == '__main__':    
     
     # read csv as dataframe with Humburg dataset
-    df = pd.read_csv('Hamburg_trajs.csv', sep=';', decimal=',').sort_values('uid')
-    df = df[['uid', 'x', 'y', 'fid', 'class']].reset_index(drop=True)
+    df = pd.read_csv('Hamburg_trajs.csv', sep=';', decimal=',').sort_values(by=['uid', 'fid'])
+    df = df[['uid', 'x', 'y', 'fid', 'spd', 'class']].reset_index(drop=True).dropna(subset=['spd'])
     
     # the maxmium value of current frame id, to restrict 
     max_fid_start = df['fid'].max() 
