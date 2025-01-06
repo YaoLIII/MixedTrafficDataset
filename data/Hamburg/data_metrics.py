@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-input: df trajs [uid,x,y,fid,class] and user_summary df [uid,ox,oy,ta,dx,dy,spd,class,gid(nan),wtime(0)]
-output: PET
+input: df trajs [uid,x,y,fid,class] 
+       user_summary df [uid,ox,oy,ta,dx,dy,spd,class,gid(nan),wtime(0)]
+output: PET 
+
 """
 
 import pandas as pd
@@ -9,13 +11,12 @@ import numpy as np
 from sklearn.neighbors import KDTree
 import matplotlib.pyplot as plt
 
-# Example dataset: [uid, t, x, y, speed]
+# dataset: [uid, x, y, fid, spd, class]
 data = pd.read_csv('Hamburg_trajs_subset.csv')
-data['speed'] = 1
 
-# Parameters
+# PET Parameters
 d_threshold = 1.0  # Distance threshold for interaction
-t_threshold = 5    # Maximum allowable PET
+t_threshold = 0.5    # Maximum allowable PET
 
 # Function to calculate PET using KD-Tree
 def calculate_pet(data, d_threshold, t_threshold):
@@ -86,4 +87,92 @@ def visualize_pet(data, pet_df):
 
 # Generate visualization
 visualize_pet(data, pet_df)
+
+
+'''method2'''
+import pandas as pd
+from shapely.geometry import LineString, box
+from rtree import index
+
+# dataset: [uid, x, y, fid, spd, class]
+data = pd.read_csv('Hamburg_trajs_subset.csv')
+
+# each trajectory saved as shapely.LingString
+trajs_LS = data.groupby('uid').apply(
+    lambda group: LineString(zip(group['x'], group['y']))
+)
+
+# insert traj bbox into the R-tree
+r_tree = index.Index()
+for uid, trajectory in trajs_LS.items():
+    r_tree.insert(uid, trajectory.bounds)
+
+# Find conflicts using R-tree
+conflicts = []
+for uid, traj in trajs_LS.items():
+    # Query the R-tree for possible intersections
+    possible_matches = list(r_tree.intersection(traj.bounds))
+    for match_id in possible_matches:
+        if uid != match_id:  # no self-comparison
+            other_traj = trajs_LS[match_id]
+            if traj.intersects(other_traj):
+                conflicts.append((uid, match_id))
+
+# Remove duplicate conflicts (e.g., (1, 2) and (2, 1))
+unique_conflicts = set(tuple(sorted(conflict)) for conflict in conflicts)
+
+# Output conflicts
+conflict_data = pd.DataFrame(unique_conflicts, columns=['uid_1', 'uid_2'])
+print(conflict_data)
+
+'''trajectory orientations'''
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+# 轨迹点集
+trajectory = np.array([
+    [0, 0],
+    [1, 1],
+    [2, 1.5],
+    [3, 2],
+    [4, 3]
+])
+
+# 使用PCA计算主要方向
+pca = PCA(n_components=2)
+pca.fit(trajectory)
+
+# 第一主成分方向
+principal_direction = pca.components_[0]
+angle = np.arctan2(principal_direction[1], principal_direction[0])
+
+# 轨迹中心点作为箭头起点
+center = trajectory.mean(axis=0)
+
+# 可视化轨迹与主要方向
+plt.figure(figsize=(8, 6))
+
+# 绘制轨迹
+plt.plot(trajectory[:, 0], trajectory[:, 1], 'o-', label="Trajectory", markersize=8)
+
+# 绘制主要方向箭头
+plt.quiver(
+    center[0], center[1],  # 箭头起点
+    principal_direction[0], principal_direction[1],  # 箭头方向
+    angles='xy', scale_units='xy', scale=1, color='r', label="Principal Direction"
+)
+
+# 图形美化
+plt.title("Trajectory and Principal Direction")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.axhline(0, color='gray', linewidth=0.5, linestyle='--')
+plt.axvline(0, color='gray', linewidth=0.5, linestyle='--')
+plt.grid(True)
+plt.legend()
+plt.axis('equal')  # 保持比例一致
+plt.show()
+
+
 
