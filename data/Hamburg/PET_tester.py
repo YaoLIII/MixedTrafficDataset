@@ -30,6 +30,7 @@ def plot_trajectories_with_timestep(df):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
     plt.tight_layout()
     plt.show()
+
 def plot_PET_hist(df, dataset_name='dataset'):
     # df [uid1,uid2,fid, dist, PET_min]
     plt.figure()
@@ -41,110 +42,6 @@ def plot_PET_hist(df, dataset_name='dataset'):
     plt.grid(axis='y', alpha=0.75)
     plt.show()
     
-# Load random n users' trajs
-data = pd.read_csv('Hamburg_trajs_subset.csv')
-unique_uids = data['uid'].unique()
-random_uids = pd.Series(unique_uids).sample(n=30, random_state=42).tolist()
-df = data[data['uid'].isin(random_uids)]
-
-plot_trajectories_with_timestep(df)
-
-def check_temporal_coexistence(df):
-    temporal_conflicts = []
-    unique_uids = df['uid'].unique()
-    
-    for i, uid1 in enumerate(unique_uids):
-        for uid2 in unique_uids[i + 1:]:
-            traj1 = df[df['uid'] == uid1]
-            traj2 = df[df['uid'] == uid2]
-            
-            # Check temporal overlap
-            t1_min, t1_max = traj1['fid'].min(), traj1['fid'].max()
-            t2_min, t2_max = traj2['fid'].min(), traj2['fid'].max()
-            
-            if t1_max >= t2_min and t2_max >= t1_min:  # Overlapping time ranges
-                temporal_conflicts.append((uid1, uid2))
-    
-    return temporal_conflicts
-
-def calculate_angle_difference(traj1, traj2):
-    # PCA to calculate main orientation
-    pca1 = PCA(n_components=1).fit(traj1)
-    pca2 = PCA(n_components=1).fit(traj2)
-    angle1 = np.arctan2(pca1.components_[0][1], pca1.components_[0][0])
-    angle2 = np.arctan2(pca2.components_[0][1], pca2.components_[0][0])
-    return np.abs(np.degrees(angle1 - angle2))
-
-def check_spatial_conflict(df, temporal_conflicts, spatial_threshold=0.5):
-    spatial_conflicts = []
-    # check the orientation difference by intersection and PCA
-    for uid1, uid2 in temporal_conflicts:
-        traj1 = df[df['uid'] == uid1]
-        traj2 = df[df['uid'] == uid2]
-        
-        # Find overlapping time frames
-        overlapping_fids = set(traj1['fid']).intersection(set(traj2['fid']))
-        
-        for fid in overlapping_fids:
-            point1 = traj1[traj1['fid'] == fid][['x', 'y']].values[0]
-            point2 = traj2[traj2['fid'] == fid][['x', 'y']].values[0]
-            
-            # Calculate Euclidean distance
-            distance = np.linalg.norm(point1 - point2)
-            if distance <= spatial_threshold:
-                spatial_conflicts.append((uid1, uid2, fid, distance))
-    
-    return spatial_conflicts
-
-def PET(df, spatial_conflicts, th_PET=0.5):
-    columns = ['uid1', 'uid2', 'fid', 'distance']
-    spatial_conflicts_df = pd.DataFrame(spatial_conflicts, columns=columns)
-    
-    min_distances = (
-        spatial_conflicts_df
-        .groupby(['uid1', 'uid2'], as_index=False)
-        .apply(lambda group: group.loc[group['distance'].idxmin()])
-        .reset_index(drop=True)
-    )
-    
-    # Merge to get spd for uid1
-    merged1 = pd.merge(min_distances, df[['uid', 'fid', 'spd']], left_on=['uid1', 'fid'], right_on=['uid', 'fid'])
-    merged1.rename(columns={'spd': 'spd_user1'}, inplace=True)
-    merged1.drop(columns=['uid'], inplace=True)
-    
-    # Merge to get spd for uid2
-    merged2 = pd.merge(merged1, df[['uid', 'fid', 'spd']], left_on=['uid2', 'fid'], right_on=['uid', 'fid'])
-    merged2.rename(columns={'spd': 'spd_user2'}, inplace=True)
-    merged2.drop(columns=['uid'], inplace=True)
-    
-    # Calculate PET1, PET2, and PET_min
-    merged2['PET1'] = merged2['distance'] / merged2['spd_user1']
-    merged2['PET2'] = merged2['distance'] / merged2['spd_user2']
-    merged2['PET_min'] = merged2[['PET1', 'PET2']].min(axis=1)
-    
-    # Create the final DataFrame and filter it with th_PET<0.5 (dangerous)
-    result = merged2[['uid1', 'uid2', 'fid', 'distance', 'PET_min']]
-    result_dangerous = result[result['PET_min'] < th_PET]
-    
-    # plot dangerous histogram
-    plot_PET_hist(result, dataset_name='result')
-    plot_PET_hist(result_dangerous, dataset_name='result_dangerous')
-    
-    # plot dangerous_result
-    
-    
-    return result, result_dangerous
-
-# Step 1: Check Temporal Co-Existence
-temporal_conflicts = check_temporal_coexistence(df)
-
-# Step 2: Check Spatial Conflict
-spatial_conflicts = check_spatial_conflict(df, temporal_conflicts, spatial_threshold=5)
-
-# Step 3: Take the most dangerous moment and calculate PET
-result, result_dangerous = PET(df, spatial_conflicts, th_PET=0.5)
-
-# Step 4: Display Results
 def plot_trajectories(result_dangerous, df):
     """
     Plots the trajectories of each pair of users (uid1, uid2) from result_dangerous.
@@ -183,8 +80,162 @@ def plot_trajectories(result_dangerous, df):
     plt.grid(alpha=0.5)
     plt.show()
 
-plot_trajectories(result_dangerous, df)
+def check_temporal_coexistence(df):
+    temporal_conflicts = []
+    unique_uids = df['uid'].unique()
+    
+    for i, uid1 in enumerate(unique_uids):
+        for uid2 in unique_uids[i + 1:]:
+            traj1 = df[df['uid'] == uid1]
+            traj2 = df[df['uid'] == uid2]
+            
+            # Check temporal overlap
+            t1_min, t1_max = traj1['fid'].min(), traj1['fid'].max()
+            t2_min, t2_max = traj2['fid'].min(), traj2['fid'].max()
+            
+            if t1_max >= t2_min and t2_max >= t1_min:  # Overlapping time ranges
+                temporal_conflicts.append((uid1, uid2))
+    
+    return temporal_conflicts
 
+def calculate_angle_difference(traj1, traj2):
+    # PCA to calculate main orientation
+    pca1 = PCA(n_components=1).fit(traj1)
+    pca2 = PCA(n_components=1).fit(traj2)
+    angle1 = np.arctan2(pca1.components_[0][1], pca1.components_[0][0])
+    angle2 = np.arctan2(pca2.components_[0][1], pca2.components_[0][0])
+    return np.abs(np.degrees(angle1 - angle2))
 
+def check_spatial_conflict(df, temporal_conflicts, spatial_threshold=0.5):
+    spatial_conflicts = []
+    # check the orientation difference by intersection
+    for uid1, uid2 in temporal_conflicts:
+        traj1 = df[df['uid'] == uid1]
+        traj2 = df[df['uid'] == uid2]
+        
+        # Find overlapping time frames
+        overlapping_fids = set(traj1['fid']).intersection(set(traj2['fid']))
+        
+        for fid in overlapping_fids:
+            point1 = traj1[traj1['fid'] == fid][['x', 'y']].values[0]
+            point2 = traj2[traj2['fid'] == fid][['x', 'y']].values[0]
+            
+            # Calculate Euclidean distance
+            distance = np.linalg.norm(point1 - point2)
+            if distance <= spatial_threshold:
+                spatial_conflicts.append((uid1, uid2, fid, distance))
+    
+    return spatial_conflicts
 
+def PET(df, spatial_conflicts, th_PET=1):
+    columns = ['uid1', 'uid2', 'fid', 'distance']
+    spatial_conflicts_df = pd.DataFrame(spatial_conflicts, columns=columns)
+    
+    min_distances = (
+        spatial_conflicts_df
+        .groupby(['uid1', 'uid2'], as_index=False)
+        .apply(lambda group: group.loc[group['distance'].idxmin()])
+        .reset_index(drop=True)
+    )
+    
+    # Merge to get spd for uid1
+    merged1 = pd.merge(min_distances, df[['uid', 'fid', 'spd']], left_on=['uid1', 'fid'], right_on=['uid', 'fid'])
+    merged1.rename(columns={'spd': 'spd_user1'}, inplace=True)
+    merged1.drop(columns=['uid'], inplace=True)
+    
+    # Merge to get spd for uid2
+    merged2 = pd.merge(merged1, df[['uid', 'fid', 'spd']], left_on=['uid2', 'fid'], right_on=['uid', 'fid'])
+    merged2.rename(columns={'spd': 'spd_user2'}, inplace=True)
+    merged2.drop(columns=['uid'], inplace=True)
+    
+    # Calculate PET1, PET2, and PET_min
+    merged2['PET1'] = merged2['distance'] / merged2['spd_user1']
+    merged2['PET2'] = merged2['distance'] / merged2['spd_user2']
+    merged2['PET_min'] = merged2[['PET1', 'PET2']].min(axis=1)
+    
+    # Create the final DataFrame and filter it with th_PET<0.5 (dangerous)
+    # TODO: now filter r_d = 0
+    result = merged2[['uid1', 'uid2', 'fid', 'distance', 'PET_min']]
+    result_dangerous = result[result['PET_min'] < th_PET]
+    result_dangerous = result_dangerous[result_dangerous['PET_min'] != 0]
+    
+    # plot dangerous histogram
+    # plot_PET_hist(result, dataset_name='result')
+    plot_PET_hist(result_dangerous, dataset_name='result_dangerous')    
+    
+    return result, result_dangerous
 
+def estimate_homogeneity(df):
+    # 1. Find the first appearance frame for each user (uid)
+    first_appearance = df.groupby('uid')['fid'].min().reset_index()
+    first_appearance.columns = ['uid', 'first_appearance_frame']
+    
+    # 2. Count the number of co-existing users in each frame (fid)
+    coexisting_users = df.groupby('fid')['uid'].nunique().reset_index()
+    coexisting_users.columns = ['fid', 'num_coexisting_users']
+    
+    # 3. Homogeneity regarding first appearance frame
+    # Calculate the distribution of first appearance frames
+    first_appearance_distribution = first_appearance['first_appearance_frame'].value_counts(normalize=True)
+    
+    # 4. Homogeneity regarding the number of co-existing users
+    # Calculate the distribution of co-existing users
+    coexisting_users_distribution = coexisting_users['num_coexisting_users'].value_counts(normalize=True)
+    
+    # 5. Estimate homogeneity (higher distribution variance indicates lower homogeneity)
+    first_appearance_variance = first_appearance_distribution.var()
+    coexisting_users_variance = coexisting_users_distribution.var()
+    
+    return first_appearance_variance, coexisting_users_variance
+
+if __name__ == "__main__":
+    
+    # # load dataset [uid x y fid spd class]
+    # data = pd.read_csv('Hamburg_trajs_subset.csv')
+    
+    # load system results ['uid', 'fid', 'x', 'y', 'spd', 'size']
+    data = pd.read_csv('test_trajs.csv', header=None)
+    data.columns = ['uid', 'fid', 'x', 'y', 'spd', 'size']
+    # remove those approching gmembers
+    # data = data[data['uid'] >= 10000]
+    # size = 1, class=individual; size>1 class=group
+    data['class'] = data['size'].apply(lambda size: 'individual' if size == 1 else 'group')
+    data = data.drop(columns=['size'])
+    
+    unique_uids = data['uid'].unique()
+    
+    df = data
+    
+    # plot_trajectories_with_timestep(df)
+    
+    # Step 1: Check Temporal Co-Existence
+    temporal_conflicts = check_temporal_coexistence(df)
+    
+    # Step 2: Check Spatial Conflict
+    spatial_conflicts = check_spatial_conflict(df, temporal_conflicts, spatial_threshold=5)
+    
+    # Step 3: Take the most dangerous moment and calculate PET
+    result, result_dangerous = PET(df, spatial_conflicts, th_PET=0.5)
+    
+    # Step 4: Display Results  
+    plot_trajectories(result_dangerous, df)
+    
+    # Step 5: Metrics
+    num_users = len(unique_uids)
+    num_dangerous = len(result_dangerous)
+    dangerous_rate = num_dangerous/num_users
+    duration = data['fid'].max() - data['fid'].min()
+    p_rate = num_users/duration
+    
+    first_appearance_variance, coexisting_users_variance = estimate_homogeneity(df)
+    
+    print('there are ' + str(num_users) +' users, and ' + str(num_dangerous) + ' dangerous cases.')
+    print(f"Around {dangerous_rate:.4f} dangerous rate.")
+    print(f"Passing rate is {p_rate:.6f}.")
+
+    print("Homogeneity regarding first appearance frame (variance):", first_appearance_variance)
+    print("Homogeneity regarding co-existing users (variance):", coexisting_users_variance)
+
+    
+    
+    
